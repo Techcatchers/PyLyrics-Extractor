@@ -34,9 +34,9 @@ This is the reason why I had to write an algorithm for fetching and scraping son
 
 3. Get the title and the lyrics for the song by passing in the song name in the class function.
 
-    '''python 
+    ```python
     song_title, song_lyrics = extract_lyrics.get_lyrics("Shape of You")
-    '''
+    ```
 
 4. If you got the title and the lyrics for the song correctly then change the song name 'Shape of you' and try again with any misspelled song name like 'Shaep fo you'.
 
