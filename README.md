@@ -57,7 +57,7 @@ If your Pull Request is accepted, you will surely get credits here.
 
 ## Contributors
 
-* Rishabh Agrawal
+* [Rishabh Agrawal](https://github.com/Techcatchers)
 
 ## Copyright Information
 
