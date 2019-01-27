@@ -1,5 +1,12 @@
-from src.lyrics_extractor import Song_Lyrics
-from src.settings import GCS_API_KEY, GCS_ENGINE_ID
+try:
+    from lyrics_extractor.lyrics import Song_Lyrics
+    from lyrics_extractor.settings import GCS_API_KEY, GCS_ENGINE_ID
+except:
+    from lyrics_extractor import Song_Lyrics
+
+    # Assign credentials by replacing None for GCS_API_KEY and GCS_ENGINE_ID
+    GCS_API_KEY = None
+    GCS_ENGINE_ID = None
 import unittest
 import time
 
@@ -23,7 +30,17 @@ class TestSongLyrics(unittest.TestCase):
         """
 
         # Initilizes the Song_Lyrics class with the required parameters
-        extract_lyrics = Song_Lyrics(GCS_API_KEY, GCS_ENGINE_ID)
+        if GCS_API_KEY == None or GCS_ENGINE_ID == None:
+            print("Error in getting the Google custom search API key and/or Engine ID.")
+            raise TypeError
+
+        try:
+            extract_lyrics = Song_Lyrics(GCS_API_KEY, GCS_ENGINE_ID)
+        except:
+            print("Incorrect API key passed for Google custom search and/or Engine ID.")
+            raise ValueError
+
+        # Extracts lyrics with the provided details
         try:
             extract_lyrics.get_lyrics("shape of you")
             time.sleep(12)

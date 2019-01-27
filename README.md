@@ -10,6 +10,12 @@ While I was searching for a Python library to extract lyrics for songs to integr
 
 This is the reason why I had to write an algorithm for fetching and scraping song lyrics from various websites even for any misspelled song name passed-in by the user.
 
+## Installation
+
+    ```python
+    pip install lyrics-extractor
+    ```
+
 ## Requirements
 
 * You will need an API Key and Engine ID of Google Custom Search JSON API.
@@ -31,6 +37,8 @@ This is the reason why I had to write an algorithm for fetching and scraping son
     ```python
     extract_lyrics = Song_Lyrics(GCS_API_KEY, GCS_ENGINE_ID)
     ```
+
+    Replace 'GCS_API_KEY' and 'GCS_ENGINE_ID' with the API key and Engine ID received.
 
 3. Get the title and the lyrics for the song by passing in the song name in the class function.
 
