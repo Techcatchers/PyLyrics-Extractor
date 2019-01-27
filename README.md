@@ -12,9 +12,9 @@ This is the reason why I had to write an algorithm for fetching and scraping son
 
 ## Installation
 
-    ```python
-    pip install lyrics-extractor
-    ```
+```python
+pip install lyrics-extractor
+```
 
 ## Requirements
 
