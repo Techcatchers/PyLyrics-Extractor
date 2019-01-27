@@ -1,4 +1,4 @@
-# PyLyrics Extractor
+# Lyrics Extractor Python Library
 
 You can now get lyrics for a song just by passing in the song name without an artist name and my lyrics extracting algorithm will do the rest of the job for you.
 
