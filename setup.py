@@ -10,7 +10,7 @@ README = (HERE / "README.md").read_text()
 # This call to setup() does all the work
 setup(
     name="lyrics_extractor",
-    version="2.2.2",
+    version="2.2.3",
     description="Get Lyrics for any songs by just passing in the song name (spelled or misspelled) in less than 2 seconds using this awesome Python Library.",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -21,6 +21,8 @@ setup(
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
     packages=["lyrics_extractor"],
