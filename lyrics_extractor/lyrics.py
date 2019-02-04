@@ -80,7 +80,7 @@ class Song_Lyrics():
                     lyrics += extract[i].get_text().strip() + '<br><br>'
                 title = title
 
-            # Method 5 LyricsTed
+            # Method 5 LyricsOff
             elif 'lyricsoff' in get_data:
                 extract = soup.select("#main_lyrics p")
                 lyrics = ''
@@ -90,7 +90,7 @@ class Song_Lyrics():
                     lyrics += extract[i].get_text(separator="\n").strip() + '<br><br>'
                 title = title
 
-            # Method 6 LyricsTed
+            # Method 6 LyricsMint
             elif 'lyricsmint' in get_data:
                 extract = soup.select("#lyric p")
                 lyrics = ''

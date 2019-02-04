@@ -19,7 +19,17 @@ pip install lyrics-extractor
 ## Requirements
 
 * You will need an API Key and Engine ID of Google Custom Search JSON API.
-  * Create your new custom search engine here to get your Engine ID: https://cse.google.com/cse/create/new
+  * Create your new Custom Search Engine here to get your Engine ID: https://cse.google.com/cse/create/new
+  * Add any of the following or all websites as per your choice in your Custom Search Engine:
+    * https://genius.com/
+    * http://www.lyricsted.com/
+    * http://www.lyricsbell.com/
+    * https://www.glamsham.com/
+    * http://www.lyricsoff.com/
+    * http://www.lyricsmint.com/
+  * You are free to customise your Custom Search Engine by prioritising any of your preferred keywords, excluding any web pages or turning on the 'Safe Search' feature.
+
+    **NOTE: Please don't turn on the 'Search the entire Web' feature as it is currently not possible to scrape from any random sites appearing in the search results.**
   * Visit here to get your API key: https://developers.google.com/custom-search/v1/overview
 * Python installed on your machine.
 * BeautifulSoup and Requests library.
