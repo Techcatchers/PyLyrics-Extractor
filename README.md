@@ -31,8 +31,10 @@ pip install lyrics-extractor
 
     **NOTE: Please don't turn on the 'Search the entire Web' feature as it is currently not possible to scrape from any random sites appearing in the search results.**
   * Visit here to get your API key: https://developers.google.com/custom-search/v1/overview
-* Python installed on your machine.
+* Python 3 installed on your machine.
 * BeautifulSoup and Requests library.
+
+  **NOTE: You don't need to install these libraries seperately when you install Lyrics Extractor using `pip` but if are cloning this repository then you may use `python setup.py install` to install all the project dependencies.**
 
 ## How to Use
 
