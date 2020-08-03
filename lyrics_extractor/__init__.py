@@ -1,1 +1,1 @@
-from .lyrics import Song_Lyrics
+from .lyrics import SongLyrics, LyricScraperException

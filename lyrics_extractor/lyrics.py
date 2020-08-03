@@ -3,106 +3,193 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class Song_Lyrics():
+class LyricScraperException(Exception):
+    """Handles all lyrics extractor exceptions."""
+
+
+class _ScraperFactory:
+    """All scrapers are defined here."""
+
+    PARAGRAPH_BREAK = '\n\n'
+    source_code = None
+    title = None
+
+    def __call__(self, source_code, title):
+        self.source_code = source_code
+        self.title = title
+
+    def _update_title(self, title):
+        self.title = title
+
+    def _genius_scraper_method_1(self):
+        extract = self.source_code.select(".lyrics")
+        if not extract:
+            return None
+
+        lyrics = (extract[0].get_text()).replace('<br>', '\n').strip()
+        return lyrics
+
+    def _genius_scraper_method_2(self):
+        all_extracts = self.source_code.select(
+            'div[class*="Lyrics__Container-sc-"]')
+        if not all_extracts:
+            return None
+
+        lyrics = ''
+        for extract in all_extracts:
+            for br in extract.find_all("br"):
+                br.replace_with("\n")
+            lyrics += extract.get_text()
+
+        return lyrics.strip()
+
+    def genius_scraper(self):
+        lyrics = self._genius_scraper_method_1() or self._genius_scraper_method_2()
+        self._update_title(self.title[:-16])
+
+        return lyrics
+
+    def glamsham_scraper(self):
+        extract = self.source_code.find_all('font', class_='general')[5]
+        if not extract:
+            return None
+
+        for br in extract.find_all("br"):
+            br.replace_with("\n")
+        lyrics = extract.get_text()
+        self._update_title(self.title[:-14].strip())
+
+        return lyrics
+
+    def lyricsbell_scraper(self):
+        extract = self.source_code.select(".lyrics-col p")
+        if not extract:
+            return None
+
+        lyrics = ''
+        for i in range(len(extract)):
+            lyrics += extract[i].get_text() + self.PARAGRAPH_BREAK
+
+        lyrics = lyrics.replace('<br>', '\n').strip()
+        self._update_title(self.title[:-13])
+        return lyrics
+
+    def lyricsted_scraper(self):
+        extract = self.source_code.select(".lyric-content p")
+        if not extract:
+            return None
+
+        lyrics = ''
+        for i in range(len(extract)):
+            lyrics += extract[i].get_text().strip() + self.PARAGRAPH_BREAK
+
+        lyrics = lyrics.replace('<br>', '\n').strip()
+        return lyrics
+
+    def lyricsoff_scraper(self):
+        extract = self.source_code.select("#main_lyrics p")
+        if not extract:
+            return None
+
+        lyrics = ''
+        for i in range(len(extract)):
+            lyrics += extract[i].get_text(separator="\n").strip() + \
+                self.PARAGRAPH_BREAK
+
+        return lyrics.strip()
+
+    def lyricsmint_scraper(self):
+        extract = self.source_code.find(
+            'section', {'id': 'lyrics'}).find_all('p')
+        if not extract:
+            return None
+
+        lyrics = ''
+        for i in range(len(extract)):
+            lyrics += extract[i].get_text().strip() + \
+                self.PARAGRAPH_BREAK
+
+        return lyrics.strip()
+
+
+class SongLyrics:
     """
-        Initialises a class Song_lyrics.
-        It takes in Google Custom Search API & Google Engine ID as arguments.
-        The ID and API key is used whenever get_lyrics function is called to fetch lyrics.
+        Takes in Google Custom Search API & Google Engine ID in contructor args.
+        Call get_lyrics function with song_name as args to get started.
+        Handle raised LyricScraperException by importing it alongside.
     """
 
-    def __init__(self, GCS_API_KEY, GCS_ENGINE_ID):
-        self.GCS_API_KEY = GCS_API_KEY
-        self.GCS_ENGINE_ID = GCS_ENGINE_ID
+    scraper_factory = _ScraperFactory()
+    SCRAPERS = {
+        "genius": scraper_factory.genius_scraper,
+        'glamsham': scraper_factory.glamsham_scraper,
+        'lyricsbell': scraper_factory.lyricsbell_scraper,
+        'lyricsted': scraper_factory.lyricsted_scraper,
+        'lyricsoff': scraper_factory.lyricsoff_scraper,
+        'lyricsmint': scraper_factory.lyricsmint_scraper,
+    }
 
+    def __init__(self, gcs_api_key: str, gcs_engine_id: str):
+        if type(gcs_api_key) != str or type(gcs_engine_id) != str:
+            raise TypeError("API key and engine ID must be a string.")
 
-    def get_lyrics(self, song_name):
+        self.GCS_API_KEY = gcs_api_key
+        self.GCS_ENGINE_ID = gcs_engine_id
+
+    def __handle_search_request(self, song_name):
+        url = "https://www.googleapis.com/customsearch/v1/siterestrict"
+        params = {
+            'key': self.GCS_API_KEY,
+            'cx': self.GCS_ENGINE_ID,
+            'q': '{} lyrics'.format(song_name),
+        }
+
+        response = requests.get(url, params=params)
+        data = response.json()
+        if response.status_code != 200:
+            raise LyricScraperException(data)
+        return data
+
+    def __extract_lyrics(self, result_url, title):
+        # Get the page source code
+        page = requests.get(result_url)
+        source_code = BeautifulSoup(page.content, 'lxml')
+
+        self.scraper_factory(source_code, title)
+        for domain, scraper in self.SCRAPERS.items():
+            if domain in result_url:
+                lyrics = scraper()
+
+        return lyrics
+
+    def get_lyrics(self, song_name: str) -> dict:
         """
-            Searches lyrics for the song name passed in.
-            Autocorrects any song name spelling errors.
-            Fetches and stores the HTML of received URL.
-            Extracts Title & Lyrics from the HTML.
-            Returns title and lyrics.
+            Fetches and autocorrects (if incorrect) song name.
+            Gets URL and title of the top Results.
+            Extracts lyrics by using one of the available scrapers.
+            Raises LyricScraperException on handling errors.
+            Returns dict with title and lyrics.
         """
 
-        url = "https://www.googleapis.com/customsearch/v1/siterestrict?key=" + self.GCS_API_KEY + "&cx=" + self.GCS_ENGINE_ID + "&q=" + song_name + "%20lyrics"
+        data = self.__handle_search_request(song_name)
 
-        page = requests.get(url)
-        data = page.json()
+        spell = data.get('spelling', {}).get('correctedQuery')
+        data = (spell and self.__handle_search_request(spell)) or data
+        query_results = data.get('items', [])
 
-        try:
-            spell = data["spelling"]["correctedQuery"]
-            song_name = spell[:-7]
-            url = "https://www.googleapis.com/customsearch/v1/siterestrict?key=" + self.GCS_API_KEY + "&cx=" + self.GCS_ENGINE_ID + "&q=" + spell
+        # Try scraping lyrics from top results
+        for i in range(len(query_results)):
+            result_url = query_results[i]["link"]
+            title = query_results[i]["title"]
+            try:
+                lyrics = self.__extract_lyrics(result_url, title)
+            except Exception as err:
+                raise LyricScraperException(err)
 
-            page = requests.get(url)
-            data = page.json()
-        except:
-            pass
+            if lyrics:
+                return {
+                    "title": self.scraper_factory.title,
+                    "lyrics": lyrics
+                }
 
-        try:
-            # Gets URL of the first Result
-            get_data = data["items"][0]["link"]
-            title = data["items"][0]["title"]
-
-            # getting the url of the site
-            page = requests.get(get_data)
-            soup = BeautifulSoup(page.content, 'html.parser')
-
-            # Method 1 Genius
-            if 'genius' in get_data:
-                extract = soup.select(".lyrics")
-                lyrics = (extract[0].get_text()).strip()
-                title = title[:-16]
-
-            # Method 2 Glamsham
-            elif 'glamsham' in get_data:
-                extract = soup.find_all('font', class_='general')[5]
-                for br in extract.find_all("br"):   # This Prints out newlines instead of <br> tags
-                    br.replace_with("\n")
-                lyrics = extract.get_text()
-                title = title[:-14].strip()
-
-            # Method 3 LyricsBell
-            elif 'lyricsbell' in get_data:
-                extract = soup.select(".lyrics-col p")
-                lyrics = ''
-                for i in range(len(extract)):
-                    lyrics += extract[i].get_text() + '<br><br>'
-                title = title[:-13]
-
-            # Method 4 LyricsTed
-            elif 'lyricsted' in get_data:
-                extract = soup.select(".lyric-content p")
-                lyrics = ''
-
-                for i in range(len(extract)):
-                    # This Prints out newlines instead of <br> tags
-                    lyrics += extract[i].get_text().strip() + '<br><br>'
-                title = title
-
-            # Method 5 LyricsOff
-            elif 'lyricsoff' in get_data:
-                extract = soup.select("#main_lyrics p")
-                lyrics = ''
-
-                for i in range(len(extract)):
-                    # This Prints out newlines instead of <br> tags
-                    lyrics += extract[i].get_text(separator="\n").strip() + '<br><br>'
-                title = title
-
-            # Method 6 LyricsMint
-            elif 'lyricsmint' in get_data:
-                extract = soup.select("#lyric p")
-                lyrics = ''
-
-                for i in range(len(extract)):
-                    # This Prints out newlines instead of <br> tags
-                    lyrics += extract[i].get_text(separator="\n").strip() + '<br><br>'
-                title = title
-
-            lyrics = lyrics.replace('<br>','\n')
-        except:
-            title = "No lyrics found for " + song_name
-            lyrics = ''
-
-        return title, lyrics
+        raise LyricScraperException({"error": "No results found"})

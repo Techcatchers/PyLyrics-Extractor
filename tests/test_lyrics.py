@@ -1,65 +1,51 @@
-try:
-    from lyrics_extractor.lyrics import Song_Lyrics
-    from lyrics_extractor.settings import GCS_API_KEY, GCS_ENGINE_ID
-except:
-    from lyrics_extractor import Song_Lyrics
+from lyrics_extractor import SongLyrics, LyricScraperException
 
-    # Assign credentials by replacing None for GCS_API_KEY and GCS_ENGINE_ID
-    GCS_API_KEY = None
-    GCS_ENGINE_ID = None
+# NOTE: Env vars will be fetched from lyrics_extractor directory so make sure
+# your .env file is inside this directory
+from lyrics_extractor.settings import GCS_API_KEY, GCS_ENGINE_ID
 import unittest
 import time
 
 
+UNAVAILABLE_SONG_NAME = "sjdfkhs!4353234rjsjkaw@d"
+MISSPELLED_SONG_NAME = "sheap of you"
+SONG_NAME = "waka waka"
+
+
 class TestSongLyrics(unittest.TestCase):
-    def test_Song_Lyrics(self):
+    extract_lyrics = None
+
+    def setUp(self):
+        self.extract_lyrics = SongLyrics(GCS_API_KEY, GCS_ENGINE_ID)
+
+    def test_unavailable_lyrics(self):
         """
-            Calculates for time taken for fetching song lyrics.
-            In my testing for fetching 6 song lyrics, it took on an average of 3 secs.
-            Some song spellings here were intentionally made wrong just to test the autocorrection feature.
-
-            Songs to try with:
-            1. despacito
-            2. Mere Rashke Kamar
-            3. closer
-            4. perfect
-
-            Example for the Output:
-            test_song_title = "Mere Rashke Qamar Lyrics - Baadshaho | Rahat Fateh Ali Khan"
-            test_Song_lyrics = "Aise lehra ke tu rubaroo aa gayi\n Aise lehra ke tu rubaroo aa gayi\n Dhadkane betahasha tadapane lagin\n Dhadkane betahasha tadapane lagin\n Teer aisa laga dard aisa jagaa\n Teer aisa laga dard aisa jagaa\n Chot dil pe wo khaayi mazaa aa gayaa!\n\nMere rashke qamar…\n Mere rashke qamar tune pehli nazar\n Jab nazar se milaai maza aagaya\n Josh hi josh mein meri aagosh mein\n Aake tu jo samaaai mazaa aa gaya\n\n(Rashk: Jealous/Envy; Qamar: Moon)\n Here “Rashq-e-Qamar” is used for the girl who is so beautiful that even the Moon is jealous of her.\n\n(Mere rashke qamar tune pehli nazar\n Jab nazar se milaai mazaa aagaya\n Jab nazar se milaai mazaa aagaya)\n\nRet hi ret thi mere dil mein bhari\n Ret hi ret thi mere dil mein bhari\n Pyaas hi pyaas thi zindagi ye meri\n Pyaas hi pyaas thi zindagi ye meri\n\nAaj sehraao mein, ishq ke gaaon mein\n Aaj sehraao mein, ishq ke gaaon mein\n Baarishein ghir ke aayin mazaa aa gaya\n\nMere rashke qamar…\n\n(Mere rashke qamar tune pehli nazar\n Jab nazar se milaai maza aa gaya)\n\nRanjha ho gaye, hum Fana ho gaye\n Aise tu muskuraai mazaa aa gaya\n\n(Mere rashke qamar tune pehli nazar\n Jab nazar se milaai maza aa gaya\n Jab nazar se milaai maza aa gaya)\n\nBarq si gir gayi kaam hi kar gayi\n Barq si gir gayi kaam hi kar gayi\n Aag aisi lagaai mazaa aa gaya\n\n"
+            Random unavailable song name passed.
+            Expected custom exception.
         """
 
-        # Initilizes the Song_Lyrics class with the required parameters
-        if GCS_API_KEY == None or GCS_ENGINE_ID == None:
-            print("Error in getting the Google custom search API key and/or Engine ID.")
-            raise TypeError
+        self.assertRaises(LyricScraperException,
+                          self.extract_lyrics.get_lyrics(UNAVAILABLE_SONG_NAME))
 
-        try:
-            extract_lyrics = Song_Lyrics(GCS_API_KEY, GCS_ENGINE_ID)
-        except:
-            print("Incorrect API key passed for Google custom search and/or Engine ID.")
-            raise ValueError
+    def test_incorrect_spelled_lyrics(self):
+        """
+            Misspelled song name passed.
+            Expected autocorrection and successful data return.
+        """
 
-        # Extracts lyrics with the provided details
-        try:
-            extract_lyrics.get_lyrics("shape of you")
-            time.sleep(12)
-        except Exception as e:
-            print("Error in extracting the song lyrics.\n" + e)
+        data = self.extract_lyrics.get_lyrics(MISSPELLED_SONG_NAME)
+        self.assertIn('title', data)
+        self.assertIn('lyrics', data)
 
-        try:
-            extract_lyrics.get_lyrics("tere jaisa yaar kaha")
-            time.sleep(15)
-        except Exception as e:
-            print("Error in autocorrecting the song name.\n" + e)
+    def test_lyrics_success(self):
+        """
+            Correct song name passed.
+            Expected successful data return.
+        """
 
-        # The function checks for title and lyrics when lyrics is found.
-        song_title, song_lyrics = extract_lyrics.get_lyrics("asdfghjklzxcvbnm")
-        test_song_title = "No lyrics found for asdfghjklzxcvbnm"
-        test_Song_lyrics = ''
-
-        self.assertEqual(song_title, test_song_title)
-        self.assertEqual(song_lyrics, test_Song_lyrics)
+        data = self.extract_lyrics.get_lyrics(SONG_NAME)
+        self.assertIn('title', data)
+        self.assertIn('lyrics', data)
 
 
 if __name__ == '__main__':
