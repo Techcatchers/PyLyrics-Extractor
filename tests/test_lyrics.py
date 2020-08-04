@@ -24,8 +24,11 @@ class TestSongLyrics(unittest.TestCase):
             Expected custom exception.
         """
 
-        self.assertRaises(LyricScraperException,
-                          self.extract_lyrics.get_lyrics(UNAVAILABLE_SONG_NAME))
+        self.assertRaises(
+            LyricScraperException,
+            self.extract_lyrics.get_lyrics,
+            UNAVAILABLE_SONG_NAME
+        )
 
     def test_incorrect_spelled_lyrics(self):
         """
