@@ -154,7 +154,7 @@ class SongLyrics:
         # Get the page source code
         page = requests.get(result_url)
         source_code = BeautifulSoup(page.content, 'lxml')
-
+        lyrics=""
         self.scraper_factory(source_code, title)
         for domain, scraper in self.SCRAPERS.items():
             if domain in result_url:
