@@ -27,6 +27,7 @@ pip install lyrics-extractor
     * https://www.glamsham.com/
     * http://www.lyricsoff.com/
     * http://www.lyricsmint.com/
+    * https://lyricsastra.com/
   * You are free to customise your Custom Search Engine by prioritising any of your preferred keywords, excluding any web pages or turning on the 'Safe Search' feature.
 
     **NOTE: Please don't turn on the 'Search the entire Web' feature as it is currently not possible to scrape from any random sites appearing in the search results.**
