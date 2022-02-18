@@ -1,5 +1,7 @@
 import time
-import requests
+import urllib.parse
+import urllib.request
+import json
 from bs4 import BeautifulSoup
 
 
@@ -111,6 +113,20 @@ class _ScraperFactory:
 
         return lyrics.strip()
 
+    def kkbox_scraper(self):
+        extract = self.source_code.select("div.lyrics > p:nth-of-type(2)")
+        if not extract:
+            return None
+            
+        return extract[0].get_text().strip()
+
+    def musixmatch_scraper(self):
+        extract = self.source_code.select("div.mxm-lyrics > span")
+        if not extract:
+            return None
+
+        return extract[0].get_text().strip()
+
 
 class SongLyrics:
     """
@@ -127,6 +143,8 @@ class SongLyrics:
         'lyricsted': scraper_factory.lyricsted_scraper,
         'lyricsoff': scraper_factory.lyricsoff_scraper,
         'lyricsmint': scraper_factory.lyricsmint_scraper,
+        'kkbox': scraper_factory.kkbox_scraper,
+        'musixmatch': scraper_factory.musixmatch_scraper,
     }
 
     def __init__(self, gcs_api_key: str, gcs_engine_id: str):
@@ -141,19 +159,24 @@ class SongLyrics:
         params = {
             'key': self.GCS_API_KEY,
             'cx': self.GCS_ENGINE_ID,
-            'q': '{} lyrics'.format(song_name),
+            'q': '{}'.format(song_name),
         }
 
-        response = requests.get(url, params=params)
-        data = response.json()
-        if response.status_code != 200:
-            raise LyricScraperException(data)
+        response = urllib.request.urlopen(url+'?'+urllib.parse.urlencode(params))
+        data = json.loads(response.read().decode())
         return data
 
     def __extract_lyrics(self, result_url, title):
         # Get the page source code
-        page = requests.get(result_url)
-        source_code = BeautifulSoup(page.content, 'lxml')
+        req = urllib.request.Request(
+            result_url, 
+            data=None, 
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
+            }
+        )
+        page = urllib.request.urlopen(req)
+        source_code = BeautifulSoup(page.read().decode(), 'lxml')
 
         self.scraper_factory(source_code, title)
         for domain, scraper in self.SCRAPERS.items():
