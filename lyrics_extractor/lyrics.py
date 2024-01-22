@@ -129,6 +129,10 @@ class SongLyrics:
         'lyricsmint': scraper_factory.lyricsmint_scraper,
     }
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+
     def __init__(self, gcs_api_key: str, gcs_engine_id: str):
         if type(gcs_api_key) != str or type(gcs_engine_id) != str:
             raise TypeError("API key and engine ID must be a string.")
@@ -137,14 +141,14 @@ class SongLyrics:
         self.GCS_ENGINE_ID = gcs_engine_id
 
     def __handle_search_request(self, song_name):
-        url = "https://www.googleapis.com/customsearch/v1/siterestrict"
+        url = "https://www.googleapis.com/customsearch/v1"
         params = {
             'key': self.GCS_API_KEY,
             'cx': self.GCS_ENGINE_ID,
             'q': '{} lyrics'.format(song_name),
         }
 
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, headers=self.headers)
         data = response.json()
         if response.status_code != 200:
             raise LyricScraperException(data)
@@ -152,7 +156,7 @@ class SongLyrics:
 
     def __extract_lyrics(self, result_url, title):
         # Get the page source code
-        page = requests.get(result_url)
+        page = requests.get(result_url, headers=self.headers)
         source_code = BeautifulSoup(page.content, 'lxml')
 
         self.scraper_factory(source_code, title)
